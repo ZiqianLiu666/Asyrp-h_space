@@ -27,10 +27,11 @@ class Coach:
   
 		self.diffu_model.eval(); self.diffu_encoder.eval(); self.diffu_decoder.eval()
 
-		# -------------  时间步区间设置 ------------- #
-		# T（最大时间步）＝ reversed(seq_inv)[0] ；默认编辑区间 [t_start_edit, t_end_edit]
+		# -------------  Time Step Interval Configuration  ------------- #
+		# T (maximum time step) = reversed(seq_inv)[0]; default edit interval is [t_start_edit, t_end_edit]
 		self.t_start_edit = list(reversed(self.diffu_info['seq_inv']))[0]   # ≈999
-		# 直接从 opts 读取，可在命令行传入 --t_end_edit N，否则用 500
+		# Read directly from opts; you can pass --t_end_edit N on the command line, otherwise 500 is used
+  
 		self.t_end_edit   = opts.t_end_edit
 
 		self.logvar       = self.diffu_info['logvar']
@@ -38,11 +39,10 @@ class Coach:
 		self.sample_type  = self.diffu_info['sample_type']
 		self.learn_sigma  = self.diffu_info['learn_sigma']
 
-		# ---------------- 其它网络 ---------------- #
 		self.cs_mlp_net = load_cs_model(opts.cs_model_weights, opts, self.device)
 		with torch.no_grad():
 			self.lpips_loss, self.id_loss = load_id_lpips_models(opts, self.device)
-		# ---------- 冻结 LPIPS & ID-loss 的参数 ----------
+
 		self.lpips_loss.eval()
 		for p in self.lpips_loss.parameters():
 			p.requires_grad = False
@@ -50,13 +50,12 @@ class Coach:
 		for p in self.id_loss.parameters():
 			p.requires_grad = False
 
-		# ---------------- 数据 & 优化器 ----------- #
+
 		self.train_bg_dataloader, self.train_t_dataloader, \
 		self.test_bg_dataloader,  self.test_t_dataloader = build_dataloaders(opts)
 
 		self.optimizer = self.configure_optimizers()
 
-		# ---------------- 日志目录 ---------------- #
 		self.log_dir        = os.path.join(opts.results_dir, 'logs')
 		self.checkpoint_dir = os.path.join(opts.results_dir, 'checkpoints')
 		os.makedirs(self.log_dir, exist_ok=True)
@@ -74,8 +73,8 @@ class Coach:
 	def eval_recon_batch(self, batch_xT,
 						latent_s_list=None, replace=False):
 		"""
-		replace=False  → 完全不改 middle_h   (h-space 原样重建)
-		replace=True   → 在编辑区/或 swap 时替换 middle_h
+		replace=False  → Do not modify middle_h at all (h-space is reconstructed as-is)
+		replace=True   → Replace middle_h within the edit region and/or during swap operations
 		"""
 		x = batch_xT
   
@@ -86,7 +85,7 @@ class Coach:
 
 				middle_h, hs, emb = self.diffu_encoder(x, t)
 
-				if replace:                                     # 只有打开开关才考虑替换
+				if replace:                                
 					if self.t_end_edit <= i <= self.t_start_edit:
 						latent_c = self.cs_mlp_net(middle_h, eval_visul=True)
 
@@ -179,7 +178,7 @@ class Coach:
 					t      = torch.full((batch_xT_bg.size(0),), i, device=self.device)
 					t_next = torch.full((batch_xT_bg.size(0),), j, device=self.device)
 	
-					# ⚠️ 每步都清梯度
+					# Clear gradients at every step
 					self.optimizer.zero_grad()
 					
 					middle_h_bg, hs_bg, emb_bg = self.diffu_encoder(x_bg_next, t)
@@ -187,7 +186,7 @@ class Coach:
 					middle_h_t, hs_t, emb_t = self.diffu_encoder(x_t_next, t)
 					w_t_pSp = middle_h_t
 
-					# -------- 是否在编辑区间？ -------- #
+					# -------- Is it within the edit interval? -------- #
 					if self.t_end_edit <= i <= self.t_start_edit:
 						latent_c_bg, latent_s_bg, g_c_bg_logits, logit_c_bg, logit_s_bg = self.cs_mlp_net(middle_h_bg)
 						latent_c_t, latent_s_t, g_c_t_logits, logit_c_t, logit_s_t = self.cs_mlp_net(middle_h_t)
@@ -231,7 +230,6 @@ class Coach:
 						loss_img_bg, loss_img_dict_bg = self.calc_image_loss_step(batch_bg, x0_t_bg, step)
 						loss_img_t, loss_img_dict_t = self.calc_image_loss_step(batch_t, x0_t_t, step)
 	  
-						# 累积字典
 						lat_d_list.append(loss_lat_dict)
 						img_bg_d_list.append(loss_img_dict_bg)
 						img_t_d_list.append(loss_img_dict_t)
@@ -374,7 +372,6 @@ class Coach:
 		  x0_t   : model's reconstruction estimate at time step t
 		  t      : current time index (0..T-1)
 		"""
-		# 权重可选：你可以沿用 cos weight
 		T = len(self.seq_inv)
 		weight = math.cos((1 - t/(T-1)) * math.pi/2)
 

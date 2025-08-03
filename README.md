@@ -98,6 +98,9 @@ Use the classifier to assess multiple checkpoints and select the one with the hi
 
 
 
-
+### citation
 Thank you for trying our project!
+
+If you find this project helpful, please consider citing our paper (coming soon).
+
 Feel free to ⭐️ the repo and reach out with any issues or suggestions.

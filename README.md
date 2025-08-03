@@ -13,6 +13,14 @@ Our method is inspired by the idea proposed in
 
 ![Overview](fig/Fig.slt.jpg)
 
+## Results
+
+Here is based on Swap editing of the Glasses attribute and Age attribute in the FFHQ dataset.
+![FFHQ](fig/FFHQ.jpg)
+
+Here is based on Swap editing of the Gender attribute and Smile attribute in the CelebA dataset.
+![CelebA](fig/CELEBA.jpg)
+
 ## Training
 
 To start training, run the following command:

@@ -3,6 +3,7 @@
 
 This repository contains part of the implementation for the paper:  
 **"Learning Common and Salient Generative Factors Between Two Image Datasets"**.
+
 We have now submitted it to AAAI-26 for review!
 
 Our method is inspired by the idea proposed in  
@@ -37,14 +38,23 @@ python training_scripts/train.py \
 
 ### Parameter Notes
 --results_dir: Path to save all intermediate results and model checkpoints.
+
 --n_cs_layers: Number of layers in the Mapping Network.
+
 --t_end_edit: Time step at which editing ends during the diffusion process.
+
 --n_inv_step: Number of denoising steps used in the inversion process.
+
 --image_interval: Interval (in steps) to save intermediate visualization results.
+
 --save_interval: Interval (in steps) to save model checkpoints.
+
 --diffu_weights: Path to the pretrained diffusion model weights.
+
 --diffu_config_path: Path to the diffusion model configuration YAML file.
+
 --dataset_type: Type of editing task (e.g., ffhq_glasses).
+
 --dataset_root: Path to your local training data directory.
 
 ![Mapping Network Architecture](fig/Arc.jpg)

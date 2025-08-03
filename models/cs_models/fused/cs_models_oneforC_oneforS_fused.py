@@ -35,15 +35,10 @@ class EqualizedWeight(nn.Module):
 
 
 class MappingNetwork_cs_Unet_fused(nn.Module):
-    """
-    Dual-output Mapping Network for UNet features using shared EqualizedLinear layers.
-    Input: [B, 512, 8, 8]
-    Output: c, s ∈ [B, 512, 8, 8]
-    """
     def __init__(self, opts):
         super().__init__()
         self.opts = opts
-        features, n_layers = opts.latent_dim, opts.n_cs_layers  # e.g., 512
+        features, n_layers = opts.latent_dim, opts.n_cs_layers 
 
         self.net_c = nn.Sequential(*[self._layer(features) for _ in range(n_layers)])
         self.net_s = nn.Sequential(*[self._layer(features) for _ in range(n_layers)])
@@ -53,7 +48,7 @@ class MappingNetwork_cs_Unet_fused(nn.Module):
             nn.LeakyReLU(0.2, inplace=True)
         )
         
-        self.global_pool = nn.AdaptiveAvgPool2d(1)    # 输出 (B, C, 1, 1)
+        self.global_pool = nn.AdaptiveAvgPool2d(1)   
 
         # fusion layer
         self.compos = CompositionalLayer_mlp(opts)
@@ -61,8 +56,7 @@ class MappingNetwork_cs_Unet_fused(nn.Module):
         # # fusion layer
         # self.compos = CompositionalLayer(opts)
         
-        # —— 新增：属性级二分类 head —— #
-        # 取任意 [B,C,H,W] latent 做全局池化，输出单个 logit
+        # —— Binary attribute head —— #
         self.attr_classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),     # [B,C,1,1]
             nn.Flatten(),                # [B,C]
@@ -85,7 +79,6 @@ class MappingNetwork_cs_Unet_fused(nn.Module):
         s = self.net_s(z_flat)
         
         if eval_visul:
-            # 把扁平后的 c 还原为 [B, C, H, W]
             c_map = c.permute(0, 2, 1).contiguous().view(B, C, H, W)
             return c_map
         
@@ -94,22 +87,20 @@ class MappingNetwork_cs_Unet_fused(nn.Module):
             s_map = s.permute(0, 2, 1).view(B, C, H, W)
             return c_map, s_map
         
-        # ↓ DAO 投影后的 logits
         c_map       = c.permute(0, 2, 1).contiguous().view(B, C, H, W)       # [B,features,H,W]
         proj_map    = self.c_embed(c_map)                                    # [B,proj_dim,H,W]
         g_c_logits  = self.global_pool(proj_map).contiguous().view(B, proj_map.size(1))  # [B,proj_dim]
 
-        # 3) fuse shared + specific via residual-MLP
+        # fuse shared + specific via residual-MLP
         fused_flat = self.compos(c, s)   # [B, HW, feats]
         
         # Reshape back to [B, 512, 8, 8]
         c = c.permute(0, 2, 1).view(B, C, H, W)
         s = s.permute(0, 2, 1).view(B, C, H, W)
         fused = fused_flat.permute(0, 2, 1).contiguous().view(B, C, H, W)
-
-        # —— 属性 logit —— #
-        logit_c = self.attr_classifier(c)   # [B,1]
-        logit_s = self.attr_classifier(s)   # [B,1]
+        
+        logit_c = self.attr_classifier(c)   
+        logit_s = self.attr_classifier(s)   
         
         return c, s, fused, g_c_logits, logit_c, logit_s
     
@@ -119,9 +110,8 @@ class CompositionalLayer_mlp(nn.Module):
         super().__init__()
         self.normalization = normalization_sign
         self.opts = opts
-        features = opts.latent_dim  # 假设是 F
+        features = opts.latent_dim  
 
-        # 只保留一层：输入 2F，输出 F，再接 LeakyReLU
         self.blend_mlp = nn.Sequential(
             EqualizedLinear(2 * features, features),
             nn.LeakyReLU(0.2, inplace=True)
@@ -137,13 +127,10 @@ class CompositionalLayer_mlp(nn.Module):
         #     f1 = F.normalize(f1, dim=-1)
         #     f2 = F.normalize(f2, dim=-1)
 
-        # 将两个特征拼接到一起，得到 [B, HW, 2F]
         residual = torch.cat((f1, f2), dim=-1)
 
-        # 一层融合
-        residual = self.blend_mlp(residual)  # 先把 2F 映射到 F，然后做激活
-
-        # 最终加上原始的 f1（比如做残差学习），得到融合后的特征
+        residual = self.blend_mlp(residual)  
+        
         features = f1 + residual
 
         return features
@@ -162,7 +149,6 @@ class ConvMappingNetwork_cs_Unet_fused(nn.Module):
         channels = opts.latent_dim  # typically 512
         n_layers = opts.n_cs_layers
         
-        # —— 为了复用，我们先定义一个 ConvBlock —— #
         def conv_block():
             return nn.Sequential(
                 nn.Conv2d(channels, channels, kernel_size=3, padding=1),
@@ -172,8 +158,7 @@ class ConvMappingNetwork_cs_Unet_fused(nn.Module):
         # Output heads
         self.net_c = nn.Sequential(*[conv_block() for _ in range(n_layers)])
         self.net_s = nn.Sequential(*[conv_block() for _ in range(n_layers)])
-        
-        # DAO 投影头：把 shared 特征从 features 降到 features//8
+
         self.c_embed = nn.Sequential(
             nn.Conv2d(channels, channels // 8, kernel_size=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True)
@@ -183,9 +168,7 @@ class ConvMappingNetwork_cs_Unet_fused(nn.Module):
         
         # fusion layer
         self.compos = CompositionalLayer_conv(opts)
-            
-        # —— 新增：属性级二分类 head —— #
-        # 取任意 [B,C,H,W] latent 做全局池化，输出单个 logit
+
         self.attr_classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),     # [B,C,1,1]
             nn.Flatten(),                # [B,C]
@@ -204,14 +187,12 @@ class ConvMappingNetwork_cs_Unet_fused(nn.Module):
         if no_fused:
             return c, s
         
-        # ↓ DAO 投影后的 logits，用于后面 KL loss
         proj_map    = self.c_embed(c)                                # [B,proj_dim,H,W]
         g_c_logits  = self.global_pool(proj_map).contiguous().view(B, proj_map.size(1))
         
         # 3) fuse shared + specific via residual-MLP
         fused = self.compos(c, s)
         
-        # —— 属性 logit —— #
         logit_c = self.attr_classifier(c)   # [B,1]
         logit_s = self.attr_classifier(s)   # [B,1]
         return c, s, fused, g_c_logits, logit_c, logit_s
@@ -223,31 +204,20 @@ class CompositionalLayer_conv(nn.Module):
         self.normalization = normalization_sign
         channels = opts.latent_dim  # typically 512
 
-        # 仅保留第一层：2F -> F，再接 LeakyReLU
         self.blend_conv = nn.Sequential(
             nn.Conv2d(2 * channels, channels, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, inplace=True)
         )
         
     def forward(self, f1, f2):
-        """
-        :param f1: shared-modality fts，shape [B, F, H, W]
-        :param f2: specific-modality fts，shape [B, F, H, W]
-        :return: fused features，shape [B, F, H, W]
-        """
-        # # 可选归一化
         # if self.normalization:
-        #     # 对通道维（F）做 L2 归一化
         #     f1 = F.normalize(f1, dim=1)
         #     f2 = F.normalize(f2, dim=1)
 
-        # 在通道维度上拼接：得到 [B, 2F, H, W]
         residual = torch.cat((f1, f2), dim=1)
 
-        # 仅一层卷积融合：2F -> F
         residual = self.blend_conv(residual)
 
-        # 最终使用残差链接：f1 + residual
         features = f1 + residual
 
         return features

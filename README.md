@@ -33,6 +33,7 @@ python training_scripts/train.py \
   --save_interval=100 \
   --batch_size=16 \
   --dataset_root=your_data_dir
+```
 
 ### Parameter Notes
 --results_dir: Path to save all intermediate results and model checkpoints.
@@ -75,6 +76,7 @@ python training_scripts/inference.py \
   --n_inv_step=100 \
   --batch_size=16 \
   --dataset_root=your_data_dir
+```
 
 ### Inference Tips
 

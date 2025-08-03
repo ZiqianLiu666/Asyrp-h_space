@@ -7,7 +7,7 @@ This repository contains part of the implementation for the paper:
 We have now submitted it to AAAI-26 for review!
 
 Our method is inspired by the idea proposed in  
-**"Diffusion Models already have a Semantic Latent Space" (ICLR 2023)**.
+[*Diffusion Models Already Have a Semantic Latent Space* (ICLR 2023)](https://arxiv.org/abs/2210.10960).
 
 ## Overview
 

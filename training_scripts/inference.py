@@ -1,5 +1,4 @@
 import os, sys 
-# 保证项目根目录（utils 的上一级）在模块搜索路径中
 proj_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, proj_root)
 
@@ -29,10 +28,11 @@ class inference:
   
         self.diffu_model.eval(); self.diffu_encoder.eval(); self.diffu_decoder.eval()
 
-        # -------------  时间步区间设置 ------------- #
-        # T（最大时间步）＝ reversed(seq_inv)[0] ；默认编辑区间 [t_start_edit, t_end_edit]
+        # -------------  Time Step Interval Configuration  ------------- #
+        # T (maximum time step) = reversed(seq_inv)[0]; default edit interval is [t_start_edit, t_end_edit]
         self.t_start_edit = list(reversed(self.diffu_info['seq_inv']))[0]   # ≈999
-        # 直接从 opts 读取，可在命令行传入 --t_end_edit N，否则用 500
+        # Read directly from opts; you can pass --t_end_edit N on the command line, otherwise 500 is used
+
         self.t_end_edit   = opts.t_end_edit
 
         self.logvar       = self.diffu_info['logvar']
@@ -40,7 +40,6 @@ class inference:
         self.sample_type  = self.diffu_info['sample_type']
         self.learn_sigma  = self.diffu_info['learn_sigma']
 
-        # ---------------- 其它网络 ---------------- #
         # load CS model
         if opts.cs_net_type.startswith('specific'):
             self.cs_mlp_net = load_cs_model_specific(opts.cs_model_weights, opts, self.device)
@@ -61,13 +60,13 @@ class inference:
         print(opts.t_end_edit)
         self.cs_mlp_net.eval()
         print(opts.dataset_type)
-        # ---------------- 数据 & 优化器 ----------- #
+
         if opts.dataset_type in ["infer_special_glasses", "infer_special_age", "infer_special_smile", "infer_special_gender"]:
             self.test_bg_dataloader,  self.test_t_dataloader = build_dataloaders(opts)
         else:
             _, _, self.test_bg_dataloader,  self.test_t_dataloader = build_dataloaders(opts)
 
-        # ---------------- 日志目录 ---------------- #
+
         self.seq_inv = list(reversed(self.diffu_info['seq_inv']))
         self.seq_inv_next = list(reversed(self.diffu_info['seq_inv_next']))
         
@@ -161,7 +160,6 @@ class inference:
                     learn_sigma=self.learn_sigma
                 )
                 
-        # 但是理想情况下这里的x_bg已经戴上眼镜变为target了
         return x_bg, x_t
     
     @torch.no_grad()
@@ -245,7 +243,7 @@ class inference:
                     learn_sigma=self.learn_sigma
                 )
                 
-        # 重建
+        # Rec
         return x_bg, x_t
     
     def hspace_rec(self, batch_xT_bg, batch_xT_t):
@@ -282,7 +280,7 @@ class inference:
                     learn_sigma=self.learn_sigma
                 )
                 
-        # h-space重建
+        # h-space rec
         return x_bg, x_t
                 
                 
@@ -305,7 +303,7 @@ class inference:
 
     def inference(self):
         self.cs_mlp_net.eval()
-        # 创建输出目录
+
         folders = ['real_x','real_y','recon_x','recon_y','swap_x2y','swap_y2x', 'hspace_x','hspace_y']
         # folders = ['recon_x','recon_y','swap_x2y','swap_y2x']
         for f in folders:
@@ -322,7 +320,8 @@ class inference:
                     tqdm(zip(self.test_bg_dataloader, self.test_t_dataloader),
                          total=total, desc="Inference")):
 
-                # ——【1】先筛一次索引，只保留“还没做完”的样本
+                # ——【1】First filter indices to keep only the "incomplete" samples
+
                 idxs = []
                 for i, (nx, ny) in enumerate(zip(names_bg, names_t)):
                     base = self.opts.results_dir
@@ -339,19 +338,19 @@ class inference:
                     if not all(os.path.exists(p) for p in paths):
                         idxs.append(i)
                 if not idxs:
-                    continue  # 整个 batch 全做完，跳过
+                    continue  # skip
 
-                # 按 idxs 抽子 batch
+                
                 x_bg = batch_bg[idxs].to(self.device).float()
                 x_t  = batch_t[idxs].to(self.device).float()
                 sub_names_bg = [names_bg[i] for i in idxs]
                 sub_names_t  = [names_t[i] for i in idxs]
 
-                # ——【2】只对子 batch 跑一次推理
+
                 xt_bg = self.noise_injection(x_bg)
                 xt_t  = self.noise_injection(x_t)
                 
-                img_count += x_bg.size(0)  # 其实就是 +=1
+                img_count += x_bg.size(0)  
                 
                 t0 = time.time()
                 swap_bg2t, swap_t2bg = self.eval_recon_batch_swap(xt_bg, xt_t)
@@ -365,18 +364,17 @@ class inference:
                 rec_h_bg, rec_h_t = self.hspace_rec(xt_bg, xt_t)
                 recon_hspace_time_total += time.time() - t2
                 
-                # ——【3】最后再逐个保存
                 for k, (nb, nt) in enumerate(zip(sub_names_bg, sub_names_t)):
-                    # 原图
+                    # Original
                     self.save_image(x_bg[k:k+1], os.path.join(self.opts.results_dir, 'real_x',   nb))
                     self.save_image(x_t[k:k+1],  os.path.join(self.opts.results_dir, 'real_y',   nt))
-                    # 重建
+                    # Rec
                     self.save_image(rec_bg[k:k+1], os.path.join(self.opts.results_dir, 'recon_x',  nb))
                     self.save_image(rec_t[k:k+1],  os.path.join(self.opts.results_dir, 'recon_y',  nt))
-                    # h-space 重建
+                    # h-space Rec
                     self.save_image(rec_h_bg[k:k+1], os.path.join(self.opts.results_dir, 'hspace_x', nb))
                     self.save_image(rec_h_t[k:k+1],  os.path.join(self.opts.results_dir, 'hspace_y', nt))
-                    # 交换
+                    # Swap
                     self.save_image(swap_bg2t[k:k+1], os.path.join(self.opts.results_dir, 'swap_x2y', nb))
                     self.save_image(swap_t2bg[k:k+1], os.path.join(self.opts.results_dir, 'swap_y2x', nt))
                     
@@ -388,7 +386,6 @@ class inference:
         print(f"Average per-image times (s): swap = {avg_swap:.4f}, recon_cs = {avg_recon_cs:.4f}, hspace = {avg_hspace:.4f}")
 
 if __name__ == "__main__":
-    # 使用已有的 TrainOptions
     parser = TrainOptions()
     opts   = parser.parser.parse_args()
 

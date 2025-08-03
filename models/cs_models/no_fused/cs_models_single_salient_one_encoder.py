@@ -36,13 +36,12 @@ class one_encoder_mlp(nn.Module):
         super().__init__()
         self.opts = opts
         features, n_layers = opts.latent_dim, opts.n_cs_layers  # e.g., 512
-        
-        # build shared MLP，注意最后一层输出 3*feats
+
         layers = []
         for i in range(n_layers - 1):
             layers += [ EqualizedLinear(features, features),
                         nn.LeakyReLU(0.2, inplace=True) ]
-        # 最后一层把维度扩到 3*feats
+
         layers += [ EqualizedLinear(features, 3 * features),
                     nn.LeakyReLU(0.2, inplace=True) ]
         self.encoder = nn.Sequential(*layers)
@@ -52,10 +51,8 @@ class one_encoder_mlp(nn.Module):
             nn.LeakyReLU(0.2, inplace=True)
         )
         
-        self.global_pool = nn.AdaptiveAvgPool2d(1)    # 输出 (B, C, 1, 1)
+        self.global_pool = nn.AdaptiveAvgPool2d(1)  
         
-        # —— 新增：属性级二分类 head —— #
-        # 取任意 [B,C,H,W] latent 做全局池化，输出单个 logit
         self.attr_classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),     # [B,C,1,1]
             nn.Flatten(),                # [B,C]
@@ -69,15 +66,12 @@ class one_encoder_mlp(nn.Module):
 
         # Apply shared MLP to each spatial location
         out_flat = self.encoder(z_flat)  # [B, 64, 512]
-        # split 成三份 每份都是 [B, HW, C]
         c, s_bg, s_t = torch.split(out_flat, C, dim=2)
         
         if eval_visul:
-            # 把扁平后的 c 还原为 [B, C, H, W]
             c_map = c.permute(0, 2, 1).contiguous().view(B, C, H, W)
             return c_map
         
-        # ↓ DAO 投影后的 logits
         c_map       = c.permute(0, 2, 1).contiguous().view(B, C, H, W)       # [B,features,H,W]
         proj_map    = self.c_embed(c_map)                                    # [B,proj_dim,H,W]
         g_c_logits  = self.global_pool(proj_map).contiguous().view(B, proj_map.size(1))  # [B,proj_dim]
@@ -105,29 +99,24 @@ class one_encoder_conv(nn.Module):
         channels = opts.latent_dim  # typically 512
         n_layers = opts.n_cs_layers
         
-        # 共享编码器：输出 3 * channels
         layers = []
         for _ in range(n_layers - 1):
             layers += [
                 nn.Conv2d(channels, channels, kernel_size=3, padding=1),
                 nn.LeakyReLU(0.2, inplace=True)
             ]
-        # 最后一层输出 3*channels
         layers += [
             nn.Conv2d(channels, 3 * channels, kernel_size=3, padding=1),
             nn.LeakyReLU(0.2, inplace=True)
         ]
         self.encoder = nn.Sequential(*layers)
 
-        # DAO 投影头：把 shared 特征从 channels 降到 channels//8
         self.c_embed = nn.Sequential(
             nn.Conv2d(channels, channels // 8, kernel_size=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True)
         )
         self.global_pool = nn.AdaptiveAvgPool2d(1)
         
-        # —— 新增：属性级二分类 head —— #
-        # 取任意 [B,C,H,W] latent 做全局池化，输出单个 logit
         self.attr_classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),     # [B,C,1,1]
             nn.Flatten(),                # [B,C]
@@ -137,19 +126,16 @@ class one_encoder_conv(nn.Module):
     def forward(self, z: torch.Tensor, eval_visul=False):
         B, C, H, W = z.shape
         # z: [B, 512, 8, 8]
-        # 编码并 split 成三路 [B, 3C, H, W] -> 3 x [B, C, H, W]
         out = self.encoder(z)
         c, s_bg, s_t = torch.split(out, C, dim=1)
 
         if eval_visul:
             return c
 
-        # DAO 投影后的 logits，用于 KL loss
         proj_map   = self.c_embed(c)            # [B, C//8, H, W]
         g_c_logits = self.global_pool(proj_map)     # [B, C//8, 1, 1]
         g_c_logits = g_c_logits.view(B, -1)         # [B, C//8]
-        
-        # —— 属性 logit —— #
+
         logit_c = self.attr_classifier(c)   # [B,1]
         logit_s_bg = self.attr_classifier(s_bg)   # [B,1]
         logit_s_t = self.attr_classifier(s_t)   # [B,1]

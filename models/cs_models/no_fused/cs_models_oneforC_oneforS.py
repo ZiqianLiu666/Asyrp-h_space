@@ -53,14 +53,12 @@ class MappingNetwork_cs_Unet(nn.Module):
             nn.LeakyReLU(0.2, inplace=True)
         )
         
-        self.global_pool = nn.AdaptiveAvgPool2d(1)    # 输出 (B, C, 1, 1)
+        self.global_pool = nn.AdaptiveAvgPool2d(1)  
 
 
         # # fusion layer
         # self.compos = CompositionalLayer(opts)
-        
-        # —— 新增：属性级二分类 head —— #
-        # 取任意 [B,C,H,W] latent 做全局池化，输出单个 logit
+
         self.attr_classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),     # [B,C,1,1]
             nn.Flatten(),                # [B,C]
@@ -83,7 +81,6 @@ class MappingNetwork_cs_Unet(nn.Module):
         s = self.net_s(z_flat)
         
         if eval_visul:
-            # 把扁平后的 c 还原为 [B, C, H, W]
             c_map = c.permute(0, 2, 1).contiguous().view(B, C, H, W)
             return c_map
         
@@ -94,12 +91,10 @@ class MappingNetwork_cs_Unet(nn.Module):
         if infer:
             return c, s
         
-        # ↓ DAO 投影后的 logits
         c_map    = c           # [B, C, H, W]
         proj_map = self.c_embed(c_map)                                # [B, proj_dim, H, W]
         g_c_logits = self.global_pool(proj_map).view(B, proj_map.size(1))  # [B, proj_dim]
 
-        # —— 属性 logit —— #
         logit_c = self.attr_classifier(c)   # [B,1]
         logit_s = self.attr_classifier(s)   # [B,1]
 
@@ -121,7 +116,6 @@ class ConvMappingNetwork_cs_Unet(nn.Module):
         channels = opts.latent_dim  # typically 512
         n_layers = opts.n_cs_layers
 
-        # —— 为了复用，我们先定义一个 ConvBlock —— #
         def conv_block():
             return nn.Sequential(
                 nn.Conv2d(channels, channels, kernel_size=3, padding=1),
@@ -132,7 +126,6 @@ class ConvMappingNetwork_cs_Unet(nn.Module):
         self.net_c = nn.Sequential(*[conv_block() for _ in range(n_layers)])
         self.net_s = nn.Sequential(*[conv_block() for _ in range(n_layers)])
         
-        # DAO 投影头：把 shared 特征从 features 降到 features//8
         self.c_embed = nn.Sequential(
             nn.Conv2d(channels, channels // 8, kernel_size=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True)
@@ -140,8 +133,6 @@ class ConvMappingNetwork_cs_Unet(nn.Module):
         
         self.global_pool = nn.AdaptiveAvgPool2d(1)
             
-        # —— 新增：属性级二分类 head —— #
-        # 取任意 [B,C,H,W] latent 做全局池化，输出单个 logit
         self.attr_classifier = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),     # [B,C,1,1]
             nn.Flatten(),                # [B,C]
@@ -160,11 +151,9 @@ class ConvMappingNetwork_cs_Unet(nn.Module):
         if infer:
             return c, s
         
-        # ↓ DAO 投影后的 logits，用于后面 KL loss
         proj_map    = self.c_embed(c)                                # [B,proj_dim,H,W]
         g_c_logits  = self.global_pool(proj_map).contiguous().view(B, proj_map.size(1))
         
-        # —— 属性 logit —— #
         logit_c = self.attr_classifier(c)   # [B,1]
         logit_s = self.attr_classifier(s)   # [B,1]
         return c, s, g_c_logits, logit_c, logit_s

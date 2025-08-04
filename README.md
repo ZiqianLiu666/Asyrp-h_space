@@ -11,6 +11,7 @@ The StyleGAN-related code used in this project can be found at: **`www.xxx.com`*
 ![Overview](fig/Fig.slt.jpg)
 
 ## Results
+![Con](fig/Title_fig.jpg)
 
 Here is based on Swap editing of the Glasses attribute and Age attribute in the FFHQ dataset.
 ![FFHQ](fig/FFHQ.jpg)

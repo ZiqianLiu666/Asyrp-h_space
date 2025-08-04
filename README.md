@@ -1,7 +1,9 @@
 # **Unsupervised Image Editing via the Latent Space of Diffusion Models**
 
 This repository contains **`part`** of the implementation for the paper:
+
 **"Learning Common and Salient Generative Factors Between Two Image Datasets"**.
+
 The StyleGAN-related code used in this project can be found at: **`www.xxx.com`**
 
 🔧 We have now submitted it to AAAI-26 for review!

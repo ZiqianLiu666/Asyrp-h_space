@@ -4,7 +4,7 @@
 This repository contains **`part`** of the implementation for the paper:
 **"Learning Common and Salient Generative Factors Between Two Image Datasets"**.
 
-We have now submitted it to AAAI-26 for review!
+🔧 We have now submitted it to AAAI-26 for review!
 
 Our method is inspired by the idea proposed in  
 [*Diffusion Models Already Have a Semantic Latent Space* (ICLR 2023)](https://arxiv.org/abs/2210.10960).

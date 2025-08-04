@@ -1,4 +1,4 @@
-# **Image Editing Based on h-space of Diffusion Model: Unsupervised Separation of Shared and Unique Representations**
+# **Unsupervised Image Editing via Latent Space of Diffusion Models**
 
 This repository contains **`part`** of the implementation for the paper: **"Learning Common and Salient Generative Factors Between Two Image Datasets"**.
 

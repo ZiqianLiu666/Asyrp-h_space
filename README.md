@@ -6,9 +6,6 @@ This repository contains **`part`** of the implementation for the paper:
 
 🔧 We have now submitted it to AAAI-26 for review!
 
-Our method is inspired by the idea proposed in  
-[*Diffusion Models Already Have a Semantic Latent Space* (ICLR 2023)](https://arxiv.org/abs/2210.10960).
-
 ## Overview
 
 ![Overview](fig/Fig.slt.jpg)
@@ -107,10 +104,12 @@ Use the classifier to assess multiple checkpoints and select the one with the hi
 
 
 ### citation
-Thank you for trying our project! 
+
+Our method is inspired by the idea proposed in  
+[*Diffusion Models Already Have a Semantic Latent Space* (ICLR 2023)](https://arxiv.org/abs/2210.10960).
+
+If you find this project helpful, please consider citing our paper **`(coming soon)`**. 
 
 The StyleGAN-related code used in this project can be found at: **`www.xxx.com`**
-
-If you find this project helpful, please consider citing our paper **`(coming soon)`**.
 
 Feel free to ⭐️ the repo and reach out with any issues or suggestions.

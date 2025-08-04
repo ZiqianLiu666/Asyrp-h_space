@@ -1,7 +1,7 @@
 # Asyrp-h_space
 **Unsupervised Image Editing via the Latent Space of Diffusion Models**
 
-This repository contains <span style="color:red"><strong>part</strong></span> of the implementation for the paper:
+This repository contains **`part`** of the implementation for the paper:
 **"Learning Common and Salient Generative Factors Between Two Image Datasets"**.
 
 We have now submitted it to AAAI-26 for review!

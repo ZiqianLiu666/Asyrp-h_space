@@ -107,8 +107,10 @@ Use the classifier to assess multiple checkpoints and select the one with the hi
 
 
 ### citation
-Thank you for trying our project!
+Thank you for trying our project! 
 
-If you find this project helpful, please consider citing our paper (coming soon).
+The StyleGAN-related code used in this project can be found at: **`www.xxx.com`**
+
+If you find this project helpful, please consider citing our paper **`(coming soon)`**.
 
 Feel free to ⭐️ the repo and reach out with any issues or suggestions.

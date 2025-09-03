@@ -2,7 +2,9 @@
 
 This repository contains **`part`** of the implementation for the paper: **"Learning Common and Salient Generative Factors Between Two Image Datasets"**. `(Implementation based on the Diffusion model)`
 
-The StyleGAN-related code used in this project can be found at: **`www.xxx.com`**
+The StyleGAN-related code used in this project can be found at: **`Coming Soon`**
+
+
 
 🔧 We have now submitted it to AAAI-26 for review!
 

@@ -6,7 +6,7 @@ Most importantly, The **`StyleGAN-related`** code used in this paper can be foun
 
 Here I have uploaded the details of my work to this repository including everything I was responsible for in this paper as well as my [Internship Report](InternShip.pdf) which I wrote myself.
 
-🔧 We have now submitted it to `Pattern Recognition` for review!
+🔧 We have now submitted the manuscript to `Pattern Recognition` for peer review.
 
 ## Overview
 

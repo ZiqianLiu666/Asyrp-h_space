@@ -21,6 +21,8 @@ Here is based on Swap editing of the Glasses attribute and Age attribute in the 
 Here is based on Swap editing of the Gender attribute and Smile attribute in the CelebA dataset.
 ![CelebA](fig/CELEBA.jpg)
 
+![Brats](fig/brats.png)
+
 ## Training
 
 To start training, run the following command:

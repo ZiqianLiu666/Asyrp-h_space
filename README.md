@@ -1,11 +1,15 @@
 # **Unsupervised Image Editing via Latent Space of Diffusion Models**
-Yunlong He, Gwilherm Lesné, Ziqian Liu, Michaël Soumm, Pietro Gori
+[Yunlong He](https://scholar.google.com/citations?hl=en&user=4H0ZyJAAAAAJ),
+[Gwilherm Lesné](https://scholar.google.com/citations?hl=en&user=8XWWnusAAAAJ),
+[Ziqian Liu](https://scholar.google.com/citations?hl=en&user=_1FGL3UAAAAJ),
+[Michaël Soumm](https://scholar.google.com/citations?hl=en&user=C1NLacwAAAAJ),
+[Pietro Gori](https://scholar.google.com/citations?hl=en&user=id9wCjsAAAAJ)
 
 [![arXiv](https://img.shields.io/badge/arXiv-Paper-b31b1b?logo=arxiv&logoColor=white)](https://arxiv.org/abs/2512.12800)
 
 This repository contains **`part`** of the implementation for the paper: **"Learning Common and Salient Generative Factors Between Two Image Datasets"**. `(Implementation based on the Diffusion model)`. 
 
-Most importantly, The **`StyleGAN-related`** code used in this paper can be found at: [https://github.com/yunlongH/CA-with-stylegan2-pSp](https://github.com/yunlongH/CA-with-stylegan2-pSp)
+Most importantly, the **StyleGAN-related implementation** used in this paper (including a more complete version) is available at: [https://github.com/yunlongH/CA-with-stylegan2-pSp](https://github.com/yunlongH/CA-with-stylegan2-pSp)
 
 🔧 We have now submitted the manuscript to `IEEE TIP` for peer review.
 

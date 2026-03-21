@@ -1,4 +1,4 @@
-# **Unsupervised Image Editing via Latent Space of Diffusion Models**
+# **Learning Common and Salient Generative Factors Between Two Image Datasets**
 [Yunlong He](https://scholar.google.com/citations?hl=en&user=4H0ZyJAAAAAJ),
 [Gwilherm Lesné](https://scholar.google.com/citations?hl=en&user=8XWWnusAAAAJ),
 [Ziqian Liu](https://scholar.google.com/citations?hl=en&user=_1FGL3UAAAAJ),

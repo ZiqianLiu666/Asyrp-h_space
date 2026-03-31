@@ -9,7 +9,7 @@
 
 This repository contains **`part`** of the implementation for the paper: **"Learning Common and Salient Generative Factors Between Two Image Datasets"**. `(Implementation based on the Diffusion model)`. 
 
-Most importantly, the **StyleGAN-related implementation** used in this paper (including a more complete version) is available at: [https://github.com/yunlongH/CA-with-stylegan2-pSp](https://github.com/yunlongH/CA-with-stylegan2-pSp)
+Most importantly, the **StyleGAN-related implementation** used in this paper is available at: [https://github.com/yunlongH/CA-with-stylegan2-pSp](https://github.com/yunlongH/CA-with-stylegan2-pSp)
 
 🔧 We have now submitted the manuscript to `IEEE TIP` for peer review.
 
